@@ -85,3 +85,4 @@ artifacts-zk
 # Miscellaneous files
 bin
 out
+contracts/src/GradientERC20.redux.sol
