@@ -105,7 +105,7 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
         thresholdTimestamp = _thresholdTimestamp;
     }
 
-    function setFundingFee(uint _schnipperTribute) external {
+    function setTribute(uint _schnipperTribute) external {
         require(
           hasRole(DEFAULT_ADMIN_ROLE, msg.sender) ||
           hasRole(AUX_ADMIN, msg.sender)
