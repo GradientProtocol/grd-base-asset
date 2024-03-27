@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract MyToken is ERC20, ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
+contract Gradient is ERC20, ERC20Burnable, ERC20Permit, ERC20Votes, Ownable {
     constructor()
         ERC20("Gradient", "GRAD")
         ERC20Permit("Gradient")
