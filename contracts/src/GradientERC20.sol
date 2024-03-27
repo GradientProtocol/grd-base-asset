@@ -28,7 +28,7 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
     uint256 public schnipperTribute = 3333;
 
 
-    constructor() ERC20("Gradient", "GRAD") {
+    constructor() ERC20("Gradient", "GDT") {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(AUX_ADMIN, msg.sender);
 
@@ -42,7 +42,7 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
             require(block.number > lastTransferBlock[from], "Only one transfer per block per address is allowed");
             lastTransferBlock[from] = block.number;
 
-            if (block.timestamp <= thresholdTimestamp && routerPairs[recipient].router != address(0)) {
+            if (block.timestamp < thresholdTimestamp && routerPairs[recipient].router != address(0)) {
 
                 uint schnipperTributeTotal = (amount * schnipperTribute) / DIVISOR;
                 amount -= schnipperTributeTotal;
@@ -61,7 +61,7 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
         bypassCapable[account] = setting;
     }
 
-    function _swapTokensByPair(uint tokenAmount, address pair) private {
+    function _swapTokensByPair(uint tokenAmount, address pair) internal {
         swapping = true;
 
         LiquidityPairs memory currentPair = routerPairs[pair];
