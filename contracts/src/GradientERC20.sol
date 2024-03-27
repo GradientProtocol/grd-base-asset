@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import {IUniswapV2Router02} from "../lib/uni.sol";
+import {IUniswapV2Router02} from "./libs/uni.sol";
 
 contract Gradient is ERC20, ERC20Burnable, AccessControl {
     struct LiquidityPairs {
@@ -18,15 +18,14 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
 
     mapping(address => LiquidityPairs) public routerPairs;
     mapping(address => uint256) public lastTransferBlock;
-    mapping(address => bool) public whiteListed;
+    mapping(address => bool) public bypassCapable;
 
     bool private swapping;
-    bool public preTrade = true;
 
     address payable public tributeHolder;
 
     uint256 public thresholdTimestamp = 0;
-    uint256 public snipeFee = 3333;
+    uint256 public schnipperTribute = 3333;
 
 
     constructor() ERC20("Gradient", "GRAD") {
@@ -39,17 +38,17 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
     }
 
     function _transfer(address from, address recipient, uint256 amount) internal override {
-        if (!whiteListed[recipient] && !whiteListed[from] && !swapping) {
+        if (!bypassCapable[recipient] && !bypassCapable[from] && !swapping) {
             require(block.number > lastTransferBlock[from], "Only one transfer per block per address is allowed");
             lastTransferBlock[from] = block.number;
 
             if (block.timestamp <= thresholdTimestamp && routerPairs[recipient].router != address(0)) {
 
-                uint snipeFeeTotal = (amount * snipeFee) / DIVISOR;
-                amount -= snipeFeeTotal;
+                uint schnipperTributeTotal = (amount * schnipperTribute) / DIVISOR;
+                amount -= schnipperTributeTotal;
 
-                super._transfer(from, address(this), snipeFeeTotal);
-                _swapTokensByPair(snipeFeeTotal, recipient);
+                super._transfer(from, address(this), schnipperTributeTotal);
+                _swapTokensByPair(schnipperTributeTotal, recipient);
             }
         }
 
@@ -58,8 +57,8 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
 
     function setBypass(address account, bool setting) public {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(AUX_ADMIN, msg.sender), "Insufficient privileges");
-        require(whiteListed[account] != setting, "Account already at setting");
-        whiteListed[account] = setting;
+        require(bypassCapable[account] != setting, "Account already at setting");
+        bypassCapable[account] = setting;
     }
 
     function _swapTokensByPair(uint tokenAmount, address pair) private {
@@ -94,7 +93,7 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
 
         routerPairs[pair].router = router;
         routerPairs[pair].base = base;
-        whiteListed[router] = true;
+        bypassCapable[router] = true;
     }
 
     function setThreshold(uint _thresholdTimestamp) external {
@@ -106,19 +105,38 @@ contract Gradient is ERC20, ERC20Burnable, AccessControl {
         thresholdTimestamp = _thresholdTimestamp;
     }
 
-    function setFundingFee(uint _snipeFee) external {
+    function setFundingFee(uint _schnipperTribute) external {
         require(
           hasRole(DEFAULT_ADMIN_ROLE, msg.sender) ||
           hasRole(AUX_ADMIN, msg.sender)
           , "Insufficient privileges"
         );
-        snipeFee = _snipeFee;
+        schnipperTribute = _schnipperTribute;
     }
 
 
     function setFundingWallet(address payable _wallet) external onlyRole(DEFAULT_ADMIN_ROLE){
         tributeHolder = _wallet;
-        whiteListed[address(_wallet)] = true;
+        bypassCapable[address(_wallet)] = true;
+    }
+
+
+    function rescueTokens(address recipient, address token, uint amount) public {
+        require(
+          hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+          , "Insufficient privileges"
+        );
+
+        IERC20(token).transfer(recipient, amount);
+    }
+
+    function rescueEth(address payable recipient) public {
+        require(
+          hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+          , "Insufficient privileges"
+        );
+
+        recipient.transfer(address(this).balance);
     }
 
 }
